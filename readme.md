@@ -14,3 +14,6 @@
   -Membuat function authenticated
   -Membuat function authorizeRoles
 -Pasang middlewares auth authenticateUser, authorizeRoles in all Router
+
+Documentaion Postman API CMS
+https://documenter.getpostman.com/view/25565772/2s93eSab1M
