@@ -1,6 +1,5 @@
 const Categories = require('../../api/v1/categories/model')
 const { BadRequest, NotFound } = require('../../errors')
-const { notFound } = require('../../middlewares/not-found')
 
 
 const getAllCategory = async (req) => {
@@ -56,11 +55,14 @@ const updateCategories = async (req, res) => {
 
   const result = Categories.findOneAndUpdate(
     { _id: id },
-    { name },
+    {
+      name,
+      organizer: req.user.organizer,
+    },
     { new: true, runValidators: true }
   )
 
-  if (!result) throw new notFound(`Tidak ada kategory dengan Id: ${id}`)
+  if (!result) throw new NotFound(`Tidak ada kategory dengan Id: ${id}`)
   
   return result
 }
@@ -68,12 +70,11 @@ const updateCategories = async (req, res) => {
 const deleteCategories = async (req) => {
   const { id } = req.params;
 
-  const result = await Categories.findOne({
+  const result = await Categories.findByIdAndRemove({
     _id: id,
     organizer: req.user.organizer,
   });
 
-  if (!result) throw new notFound(`Tidak ada Kategori dengan id :  ${id}`);
 
   return result;
 }
@@ -83,7 +84,7 @@ const checkingCategories = async (id) => {
     _id: id,
   });
 
-  if (!result) throw new NotFoundError(`Tidak ada Kategori dengan id :  ${id}`);
+  if (!result) throw new NotFound(`Tidak ada Kategori dengan id :  ${id}`);
 
   return result;
 };

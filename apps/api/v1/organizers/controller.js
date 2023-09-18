@@ -1,4 +1,4 @@
-const { createOrganizers, createUsers, getAllUsers } = require('../../../services/mongoose/users')
+const { createOrganizers, createUsers, getAllOrganizers, getAllAdmins, getAllOwners, getAllUsers } = require('../../../services/mongoose/users')
 const { StatusCodes } = require('http-status-codes')
 
 const createCMSOrganizer = async (req, res, next) => {
@@ -25,9 +25,9 @@ const createCMSUser = async (req, res, next) => {
   }
 }
 
-const getUsers = async (req, res, next) => {
+const getOrganizers = async (req, res, next) => {
   try {
-    const result = await getAllUsers(req)
+    const result = await getAllOrganizers(req)
 
     res.status(StatusCodes.OK).json({
       data: result
@@ -37,4 +37,47 @@ const getUsers = async (req, res, next) => {
   }
 }
 
-module.exports = { createCMSOrganizer, createCMSUser, getUsers }
+const getAdmins = async (req, res, next) => {
+  try {
+    const result = await getAllAdmins(req)
+
+    res.status(StatusCodes.OK).json({
+      data: result,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getOwners = async (req, res, next) => {
+  try {
+    const result = await getAllOwners(req)
+
+    res.status(StatusCodes.OK).json({
+      data: result,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const getUsers = async (req, res, next) => {
+  try {
+    const result = await getAllUsers(req)
+
+    res.status(StatusCodes.OK).json({
+      data: result,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+module.exports = {
+  createCMSOrganizer,
+  createCMSUser,
+  getOrganizers,
+  getAdmins,
+  getOwners,
+  getUsers,
+}

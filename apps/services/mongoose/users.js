@@ -45,10 +45,36 @@ const createUsers = async (req, res) => {
 };
 
 
-const getAllUsers = async (req) => {
-  const result = await Users.find();
+const getAllOrganizers = async (req) => {
+  const result = await Users.find({ role: 'organizer' });
 
   return result;
 };
 
-module.exports = { createOrganizers, createUsers, getAllUsers }
+const getAllAdmins = async (req) => {
+  const result = await Users.find({ role: "admin" })
+
+  return result
+}
+
+const getAllOwners = async (req) => {
+  const result = await Users.find({ role: "owner" })
+
+  return result
+}
+
+const getAllUsers = async (req) => {
+  const result = await Users.find()
+
+  return result
+}
+
+
+module.exports = {
+  createOrganizers,
+  createUsers,
+  getAllOrganizers,
+  getAllAdmins,
+  getAllOwners,
+  getAllUsers,
+}

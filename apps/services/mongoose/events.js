@@ -4,12 +4,11 @@ const { checkingImage } = require('./images')
 const { checkingTalents } = require('./talents')
 
 const { BadRequest, NotFound } = require('../../errors')
-const notFound = require('../../middlewares/not-found')
 
 const getAllEvents = async (req) => {
-  const { keyword, category, talent } = req.query
+  const { keyword, category, talent, statusEvent } = req.query
 
-  let condition = {}
+  let condition = { organizer: req.user.organizer }
 
   if (keyword) {
     condition = { ...condition, title: { $regex: keyword, $options: 'i' } }
@@ -21,6 +20,10 @@ const getAllEvents = async (req) => {
 
   if (talent) {
     condition = { ...condition, talent: talent }
+  }
+
+  if (["Draft", "Published"].includes(statusEvent)) {
+    condition = {...condition, statusEvent: statusEvent}
   }
 
   const result = await Events.find(condition)
@@ -76,6 +79,7 @@ const createEvents = async (req) => {
     image,
     category,
     talent,
+    organizer: req.user.organizer,
   })
 
   return result
@@ -83,20 +87,23 @@ const createEvents = async (req) => {
 const getOneEvents = async (req) => {
   const { id } = req.params;
 
-  const result = await Events.findOne({ _id: id })
-    .populate({ path: 'image', select: '_id name' })
+  const result = await Events.findOne({
+    _id: id,
+    organizer: req.user.organizer,
+  })
+    .populate({ path: "image", select: "_id name" })
     .populate({
-      path: 'category',
-      select: '_id name',
+      path: "category",
+      select: "_id name",
     })
     .populate({
-      path: 'talent',
-      select: '_id name role image',
-      populate: { path: 'image', select: '_id  name' },
-    });
+      path: "talent",
+      select: "_id name role image",
+      populate: { path: "image", select: "_id  name" },
+    })
 
   if (!result)
-    throw new notFound(`Tidak ada pembicara dengan id :  ${id}`);
+    throw new NotFound(`Tidak ada pembicara dengan id :  ${id}`);
 
   return result;
 };
@@ -123,14 +130,15 @@ const updateEvents = async (req) => {
   await checkingTalents(talent)
 
   const checkEvents = await Events.findOne({
-    _id: id
+    _id: id,
   })
 
-  if (!checkEvents) throw new notFound(`Tidak ada acara dengan id :  ${id}`);
+  if (!checkEvents) throw new NotFound(`Tidak ada acara dengan id :  ${id}`);
 
   const check = await Events.findOne({
     title,
-    _id: {$ne: id}
+    _id: { $ne: id },
+    organizer: req.user.organizer,
   })
 
   if (check) throw new BadRequest('Judul Event Sudah Terdaftar')
@@ -148,7 +156,8 @@ const updateEvents = async (req) => {
       tickets,
       image,
       category,
-      talent
+      talent,
+      organizer: req.user.organizer,
     },
     { new: true, runValidators: true }
   )
@@ -159,9 +168,34 @@ const updateEvents = async (req) => {
 const deleteEvents = async (req) => {
   const { id } = req.params
   
-  const result = await Events.findByIdAndRemove({ _id: id })
+  const result = await Events.findByIdAndRemove({
+    _id: id,
+    organizer: req.user.organizer,
+  })
 
-  if (!result) throw new notFound(`Tidak ada pembicara dengan id : ${id}`)
+  if (!result) throw new NotFound(`Tidak ada pembicara dengan id : ${id}`)
+
+  return result
+}
+
+const changeStatusEvents = async (req) => {
+  const { id } = req.params
+  const { statusEvent } = req.body
+  
+  if (!["Draft", "Published"].includes(statusEvent)) {
+    throw new BadRequest(`Tidak ada Pilihan status Berikut ini : ${statusEvent}. hanya ada Draft dan Published `)
+  }
+
+  const result = await Events.findOne({
+    _id: id,
+    organizer: req.user.organizer
+  })
+
+  if (!result) throw new NotFound(`Tidak ada acara dengan id ${id}`)
+  
+  result.statusEvent = statusEvent
+
+  await result.save()
 
   return result
 }
@@ -171,5 +205,6 @@ module.exports = {
   getOneEvents,
   createEvents,
   updateEvents,
-  deleteEvents
+  deleteEvents,
+  changeStatusEvents,
 }
